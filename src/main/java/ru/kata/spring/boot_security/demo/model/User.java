@@ -1,5 +1,9 @@
 package ru.kata.spring.boot_security.demo.model;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,11 +18,13 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,7 +54,7 @@ public class User {
     private int age;
 
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -82,8 +88,35 @@ public class User {
         return username;
     }
 
-       public void setUsername(String username) {
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+    public void setUsername(String username) {
         this.username = username;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
     }
 
     public String getPassword() {
@@ -124,5 +157,18 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

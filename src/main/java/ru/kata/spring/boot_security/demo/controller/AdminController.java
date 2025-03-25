@@ -12,33 +12,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repository.RoleRepository;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
-import ru.kata.spring.boot_security.demo.service.CustomUserDetailsService;
+import ru.kata.spring.boot_security.demo.service.RoleServiceImpl;
+import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 @Controller
-public class MainController {
+public class AdminController {
 
     private final UserRepository userRepository;
-    private final CustomUserDetailsService userDetailsService;
-    private final RoleRepository roleRepository;
+    private final UserServiceImpl userDetailsService;
+    private final RoleServiceImpl roleServiceimpl;
 
     @Autowired
-    public MainController(UserRepository userRepository, CustomUserDetailsService userDetailsService, RoleRepository roleRepository) {
+    public AdminController(UserRepository userRepository, UserServiceImpl userDetailsService, RoleServiceImpl roleServiceimpl) {
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
-        this.roleRepository = roleRepository;
-    }
-
-    @GetMapping("/")
-    public String index() {
-        return "index";
+        this.roleServiceimpl = roleServiceimpl;
     }
 
     @GetMapping("/admin")
@@ -47,21 +41,11 @@ public class MainController {
         model.addAttribute("usersDetails", userDetails);
         model.addAttribute("users", users);
         model.addAttribute("user", new User());
-        model.addAttribute("allRoles", roleRepository.findAll());
+        model.addAttribute("allRoles", roleServiceimpl.findAllRoles());
         return "admin";
     }
 
-    @GetMapping("/user")
-    public String user(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("user", userDetails);
-        User user = userRepository.findByUsername(userDetails.getUsername());
-        model.addAttribute("username", user.getUsername());
-        model.addAttribute("name", user.getName());
-        model.addAttribute("secondname", user.getSecondname());
-        return "user";
-    }
-
-    @GetMapping("/delete")
+    @GetMapping("/admin/delete")
     public String deleteUser(@RequestParam("id") Long id) {
         userRepository.deleteById(id);
         return "redirect:/admin";
@@ -74,7 +58,7 @@ public class MainController {
             return "redirect:/";
         }
         model.addAttribute("user", user);
-        model.addAttribute("allRoles", roleRepository.findAll());
+        model.addAttribute("allRoles", roleServiceimpl.findAllRoles());
         model.addAttribute("selectedRoleIds", user.getRoles().stream().map(Role::getId).collect(Collectors.toList()));
         return "admin/update";
     }
@@ -87,7 +71,7 @@ public class MainController {
             Model model
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("allRoles", roleRepository.findAll());
+            model.addAttribute("allRoles", roleServiceimpl.findAllRoles());
             model.addAttribute("selectedRoleIds", roleIds != null ? roleIds : List.of());
             return "admin/update";
         }
@@ -104,12 +88,10 @@ public class MainController {
             Model model
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("allRoles", roleRepository.findAll());
+            model.addAttribute("allRoles", roleServiceimpl.findAllRoles());
             return "admin";
         }
-
-        Set<Role> roles = roleRepository.findByIdIn(roleIds != null ? roleIds : List.of());
-        user.setRoles(roles);
+        roleServiceimpl.SetUserRoles(roleIds, user);
 
         userDetailsService.addUser(user);
         return "redirect:/admin";

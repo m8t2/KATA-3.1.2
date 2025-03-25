@@ -144,7 +144,6 @@
         <th>Имя</th>
         <th>Фамилия</th>
         <th>Возраст</th>
-        <th>Пароль</th>
         <th>Роли</th>
         <th>Действие</th>
 
@@ -157,12 +156,11 @@
         <td th:text="${user.name}"></td>
         <td th:text="${user.secondname}"></td>
         <td th:text="${user.age}"></td>
-        <td th:text="${user.password}"></td>
         <td>
             <span th:each="role : ${user.roles}" th:text="${role.name} + ' '"></span>
         </td>
         <td>
-            <a th:href="@{/delete(id=${user.id})}" onclick="return confirm('Вы уверены?')">Удалить</a>
+            <a th:href="@{/admin/delete(id=${user.id})}" onclick="return confirm('Вы уверены?')">Удалить</a>
             <a th:href="@{admin/update(id=${user.id})}">Изменить</a>
         </td>
     </tr>
